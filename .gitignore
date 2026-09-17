@@ -1,0 +1,27 @@
+data/
+work/
+.pnpm-store/
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+.venv-yahoo/
+
+# Personal configuration and secrets stay on this Mac.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+
+# Generated applications, build metadata, and editor files.
+*.app/
+*.tsbuildinfo
+.sites-runtime/
+.codex/
+.idea/
