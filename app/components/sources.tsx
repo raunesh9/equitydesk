@@ -1,4 +1,4 @@
-import { type Stock } from '@/lib/stocks';
+import { sessionLabel, type Stock } from '@/lib/stocks';
 export function Sources({ stock }: { stock: Stock }) {
   if (stock.mode === 'sample')
     return (
@@ -13,7 +13,7 @@ export function Sources({ stock }: { stock: Stock }) {
       {stock.quote && (
         <>
           <p>
-            Last regular-session price:{' '}
+            {sessionLabel(stock.quote.priceSession)} price:{' '}
             {stock.quote.priceAt
               ? new Date(stock.quote.priceAt).toLocaleString()
               : 'Not available'}{' '}

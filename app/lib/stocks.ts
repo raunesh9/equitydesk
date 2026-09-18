@@ -33,6 +33,13 @@ export type Stock = {
   historyFeed?: string;
 };
 export type Quote = {
+  priceSession?: 'regular' | 'pre' | 'post' | 'overnight';
+  sessions?: Partial<
+    Record<
+      'regular' | 'pre' | 'post' | 'overnight',
+      { price: number; priceAt: string; changePercent: number | null }
+    >
+  >;
   symbol: string;
   price: number | null;
   priceAt: string | null;
@@ -53,6 +60,13 @@ export type ManagerSettings = {
   concentrationLimit: number;
   driftLimit: number;
 };
+export const sessionLabel = (session?: string) =>
+  ({
+    regular: 'Regular session',
+    pre: 'Pre-market',
+    post: 'After-hours',
+    overnight: 'Overnight',
+  })[session || 'regular'] || 'Latest available';
 export const defaultManager: ManagerSettings = {
   cash: 0,
   targets: {},
@@ -74,6 +88,7 @@ export type Watch = {
   updatedAt: string;
 };
 export type AppState = {
+  storage?: 'browser';
   mode: 'sample' | 'live';
   watchlist: Watch[];
   holdings: Holding[];

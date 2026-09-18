@@ -21,7 +21,8 @@ import {
 } from '@/components/ui/table';
 import { StockPicker } from '@/components/stock-picker';
 import { useQuotes } from '@/lib/use-quotes';
-import { money, type AppState } from '@/lib/stocks';
+import { money, sessionLabel, type AppState } from '@/lib/stocks';
+import { SessionPrices } from '@/components/session-prices';
 import { request } from '@/lib/api';
 
 const fillPrice = (n: number | null | undefined, currency = 'USD') =>
@@ -46,6 +47,7 @@ type Preview = {
   checkedAt: string;
   source: string;
   marketState: string;
+  priceSession?: string;
   expiresAt: number;
 };
 export function PaperTrading({
@@ -358,7 +360,7 @@ export function PaperTrading({
               <strong>
                 {fillPrice(quote?.price, quote?.currency || 'USD')}
               </strong>
-              <span>Yahoo last regular-session price</span>
+              <span>Yahoo · {sessionLabel(quote?.priceSession)} price</span>
             </div>
             <p className="small muted">
               Price as of{' '}
@@ -371,6 +373,7 @@ export function PaperTrading({
                 : 'not yet'}
               .
             </p>
+            <SessionPrices quote={quote} />
             <Tabs value={side} onValueChange={(v) => setSide(String(v))}>
               <TabsList className="paper-side">
                 <TabsTrigger value="buy">Buy</TabsTrigger>
@@ -450,7 +453,7 @@ export function PaperTrading({
         )}
         <p className="footnote">
           Most recent 100 trades shown. Your complete practice history stays
-          saved on this Mac.
+          saved {app.storage === 'browser' ? 'in this browser' : 'on this Mac'}.
         </p>
       </article>
       <Dialog
@@ -479,10 +482,7 @@ export function PaperTrading({
               <p className="paper-confirm-total">{money(preview.amount)}</p>
               <p className="small muted">
                 Yahoo price from {new Date(preview.quoteAt).toLocaleString()}.{' '}
-                {preview.marketState === 'REGULAR'
-                  ? 'Regular session.'
-                  : 'Outside regular trading hours or session status unavailable.'}{' '}
-                May be delayed.
+                {sessionLabel(preview.priceSession)} quote. May be delayed.
               </p>
               <p className="footnote">
                 This price is held for 60 seconds, until{' '}

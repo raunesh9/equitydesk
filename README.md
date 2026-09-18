@@ -1,6 +1,18 @@
 # EquityDesk
 
-A local Mac app for stock research, a manually entered portfolio, and practice investing with virtual money.
+A stock research, portfolio tracking, and practice investing app, available on the web and as a local Mac app.
+
+**Open the website: [EquityDesk](https://equitydesk.raunesh9.workers.dev).** Bookmark it in Chrome. The website stays available without starting the Mac app, using the same Cloudflare hosting approach as QuizHunter.
+
+The website saves holdings, notes, allocation targets, and virtual trades in **this browser only**. They survive closing and reopening the browser, but do not sync with other devices, browser profiles, or the Mac app. Clearing site data removes this browser’s account. No personal portfolio data is uploaded to the public website. A new browser starts with an empty portfolio and $100,000 in virtual practice cash.
+
+### Web prices outside regular hours
+
+The website selects the newest timestamped quote Yahoo supplies, including pre-market and after-hours prices. Open **Pre-market, after-hours & overnight** to see each available session, its price, and its actual trade time. Portfolio estimates and virtual fills use that selected price; the regular-session close remains visible separately. Refresh checks run every 30 seconds while open, subject to browser throttling and Yahoo availability.
+
+An overnight label requires a supplied trade timestamp during overnight hours, with corresponding Yahoo session metadata. A market-state label alone never turns an old after-hours price into an overnight quote. When Yahoo does not supply an overnight price, the app says **Not supplied by Yahoo**. Rivian and Hadron currently return after-hours prices through the connected API, not a continuous overnight feed. Refreshing cannot create a new trade or guarantee streaming data. [Yahoo extended-hours documentation](https://help.yahoo.com/kb/SLN26786.html).
+
+Web charts contain up to five years of available daily closing prices and exclude extended sessions. The web financial adapter retains reported zeros and missing values, with no calculated replacements. The website uses the bundled listing directory plus Yahoo search for names beyond that snapshot; the local Mac directory also refreshes daily.
 
 ## Open it again
 
@@ -26,7 +38,7 @@ Practice trades and cash stay saved when you close and reopen the app. A preview
 
 **Reset practice account** clears only practice holdings and trades and restores $100,000. It keeps your manually entered holdings and research notes.
 
-This is a simulation, with no brokerage connection and no real orders. Fills use the displayed Yahoo regular-session price, including outside market hours; this price may be delayed. Fills do not model liquidity, bid/ask spreads, slippage, commissions, taxes, dividends, or stock splits. A recently checked price is required; unavailable, failed, non-USD, or prices more than seven days old cannot be used for a practice trade.
+This is a simulation, with no brokerage connection and no real orders. Website fills use the newest available Yahoo session price; the local Python app uses the regular-session price. Both may be delayed. Fills do not model liquidity, bid/ask spreads, slippage, commissions, taxes, dividends, or stock splits. A recently checked price is required; unavailable, failed, non-USD, or prices more than seven days old cannot be used for a practice trade.
 
 ## Research and track actual holdings
 
@@ -66,7 +78,7 @@ Actual holdings, cost basis, and cash are entered manually. Dividends, tax lots,
 
 ## Saved data and backup
 
-Everything you enter stays in this folder’s `data` directory. To back up, stop the app and copy `data` somewhere private. Older provider keys, if previously saved, remain private files there; the new Yahoo integration does not use them. The browser never receives these keys.
+In the local Mac app, everything you enter stays in this folder’s `data` directory. To back up the Mac app, stop it and copy `data` somewhere private. The public website instead uses browser storage as described above. Older provider keys, if previously saved, remain private files on your Mac; the Yahoo integration does not use them. The website never receives these keys.
 
 The server listens only on this Mac at 127.0.0.1. Yahoo receives the company names and symbols being requested, not your notes, positions, or account balances.
 
@@ -77,3 +89,11 @@ All required software is installed on this Mac. The launcher uses the project’
 VS Code is optional: open this **Stock Tool** folder in VS Code to edit the project. `server.py` handles local API/storage, `yahoo_data.py` handles Yahoo, `paper.py` handles the virtual ledger, `market.py` handles the listing directory and the earlier provider adapter, `app/` contains the interface, and `native/` contains the Mac window. Browser output is in `app/dist/client`.
 
 For future changes, ask Codex to edit this folder, run the Python and frontend tests, rebuild the interface, and restart the local server. `requirements.txt` pins the Yahoo client; `requirements-lock.txt` records its installed dependency versions. A moved or deleted Python runtime may require rebuilding `.venv-yahoo` with Python 3.12 and installing those requirements.
+
+## Website maintenance
+
+The public site uses `app/cloud/worker.ts` for read-only Yahoo data and static assets, with `yahoo-finance2` pinned to 4.0.2. The browser account lives in IndexedDB through `app/lib/browser-storage.ts`; transactions serialize changes across tabs and roll back failed writes. The paper ledger uses integer cents and eight-decimal share units, expiring previews, and idempotent confirmations.
+
+From `app`, use `pnpm test`, `pnpm exec tsc --noEmit`, and `pnpm build`. `pnpm preview:cloud` previews the hosted behavior on port 8768. After signing into your existing Cloudflare account, `pnpm deploy:cloud` publishes to the permanent URL. The Cloudflare configuration lives in `app/cloud/wrangler.jsonc` so it does not change the Mac app’s static build. Only the Worker and `app/dist/client` are deployed; personal databases and credentials are excluded.
+
+Publishing is manual, not automatic on GitHub push. The public version was verified with concurrent research requests for RIVN, HDRN, and RKLB, a 20-company quote batch, and a second successful refresh with advancing retrieval times. Browser purchase/reload checks and 30 frontend/domain tests passed. Yahoo can still be unavailable or rate-limit requests; saved prices retain their source timestamps and get a warning when refresh fails.

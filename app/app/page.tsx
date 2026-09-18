@@ -41,6 +41,8 @@ import { PaperTrading } from '@/components/paper-trading';
 import { useQuotes } from '@/lib/use-quotes';
 import { Switch } from '@/components/ui/switch';
 import { Sources } from '@/components/sources';
+import { SessionPrices } from '@/components/session-prices';
+import { sessionLabel } from '@/lib/stocks';
 import { request } from '@/lib/api';
 import {
   sampleStocks,
@@ -510,7 +512,9 @@ export default function Home() {
         </div>
         <span className="local-status">
           <i />
-          Local on your Mac
+          {app.storage === 'browser'
+            ? 'Saved in this browser'
+            : 'Local on your Mac'}
         </span>
       </header>
       <div className="workspace">
@@ -745,7 +749,8 @@ export default function Home() {
                     <div className="chart-toolbar">
                       <span className="muted small">
                         {active.quote
-                          ? 'Last regular-session price · ' +
+                          ? sessionLabel(active.quote.priceSession) +
+                            ' price · ' +
                             (active.quote.priceAt
                               ? new Date(active.quote.priceAt).toLocaleString()
                               : 'Not available')
@@ -754,6 +759,19 @@ export default function Home() {
                       </span>
                       <RangePicker value={range} onChange={setRange} />
                     </div>
+                    {active.quote && (
+                      <p className="chart-caption">
+                        {active.quote.warning
+                          ? 'Latest check failed. '
+                          : 'Last successful check: ' +
+                            new Date(
+                              active.quote.checkedAt,
+                            ).toLocaleTimeString() +
+                            '. '}
+                        {sessionLabel(active.quote.priceSession)} quote. Yahoo
+                        prices may be delayed.
+                      </p>
+                    )}
                     <PriceChart stocks={[active]} range={range} />
                     <p className="chart-caption">
                       {selectedPoints.length > 0
@@ -770,6 +788,7 @@ export default function Home() {
                       <p className="warning-box">{active.quote.warning}</p>
                     )}
                     <Sources stock={active} />
+                    <SessionPrices quote={active.quote} />
                   </article>
                   <aside className="panel">
                     <p className="eyebrow">COMPANY SNAPSHOT</p>
@@ -1095,7 +1114,8 @@ export default function Home() {
             {!app.watchlist.length ? (
               <Empty title="Make room for your next idea">
                 Open a company in Research and select Watch. Your notes will
-                stay saved on this Mac.
+                stay saved{' '}
+                {app.storage === 'browser' ? 'in this browser' : 'on this Mac'}.
               </Empty>
             ) : (
               <div className="watch-grid">
@@ -1429,12 +1449,24 @@ export default function Home() {
           </TabsContent>
         </Tabs>
         <footer className="app-footer">
-          <span>EquityDesk · Saved on this Mac</span>
+          <span>
+            EquityDesk ·{' '}
+            {app.storage === 'browser'
+              ? 'Saved in this browser'
+              : 'Saved on this Mac'}
+          </span>
           <span>
             {app.mode === 'sample' ? 'Sample workspace' : 'Provider workspace'}{' '}
             · Research at your own pace
           </span>
         </footer>
+        {app.storage === 'browser' && (
+          <p className="footnote">
+            Your holdings, notes, and practice account stay in this browser.
+            They do not sync with the Mac app or other devices. Clearing this
+            site’s browser data removes them.
+          </p>
+        )}
       </div>
 
       <Dialog open={settings} onOpenChange={setSettings}>

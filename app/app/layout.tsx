@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 export const metadata: Metadata = {
   title: 'EquityDesk · Stock Research',
-  description: 'Your local stock research, watchlist, and portfolio workspace.',
+  description:
+    'Stock research, portfolio tracking, and practice investing with virtual money.',
+  icons: { icon: '/favicon.svg' },
 };
 export default function RootLayout({
   children,
