@@ -1,0 +1,16 @@
+{
+  "description": "Curated research universe, not an exhaustive exchange or index membership list. ETF groups are proxies for market, sector and industry performance.",
+  "benchmark": "SPY",
+  "market_etfs": {
+    "SPY": "S&P 500", "QQQ": "Nasdaq 100", "DIA": "Dow 30", "IWM": "US small caps", "VTI": "US total market",
+    "VEA": "Developed international equities", "VWO": "Emerging-market equities", "AGG": "US aggregate bonds", "TLT": "Long-term US Treasuries", "GLD": "Gold"
+  },
+  "sector_etfs": {
+    "XLK": "Technology", "XLF": "Financials", "XLV": "Health care", "XLY": "Consumer discretionary", "XLP": "Consumer staples",
+    "XLE": "Energy", "XLI": "Industrials", "XLB": "Materials", "XLU": "Utilities", "XLRE": "Real estate", "XLC": "Communication services"
+  },
+  "industry_etfs": {
+    "SMH": "Semiconductors", "KRE": "Regional banks", "XBI": "Biotechnology", "ITA": "Aerospace and defense", "XRT": "Retail", "IYT": "Transportation"
+  },
+  "stocks": ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "ORCL", "AMD", "CRM", "ADBE", "JPM", "BAC", "GS", "V", "MA", "BRK-B", "UNH", "LLY", "JNJ", "ABBV", "MRK", "XOM", "CVX", "COP", "WMT", "COST", "PG", "KO", "PEP", "HD", "MCD", "CAT", "GE", "RTX", "UPS", "LIN", "NEM", "NEE", "DUK", "PLD", "AMT", "NFLX", "DIS", "RIVN", "HDRN", "RKLB"]
+}

@@ -1,0 +1,94 @@
+name: EquityDesk daily cloud research
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+      timezone: America/Indiana/Indianapolis
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Generate and validate the report without sending email
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: equitydesk-daily-research
+  cancel-in-progress: false
+
+jobs:
+  research:
+    if: github.event_name == 'workflow_dispatch' || vars.EQUITYDESK_CLOUD_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      EQUITYDESK_EMAIL: ${{ vars.EQUITYDESK_EMAIL }}
+      EQUITYDESK_OLLAMA_BINARY: ${{ github.workspace }}/tools/ollama/bin/ollama
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - name: Check Gmail and previous delivery
+        id: preflight
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            python cloud_research.py preflight --dry-run
+          else
+            python cloud_research.py preflight
+          fi
+      - name: Test research and delivery guards
+        if: steps.preflight.outputs.skip != 'true'
+        run: python -m unittest discover -s tests -p 'test*research*.py'
+      - name: Install market data dependencies
+        if: steps.preflight.outputs.skip != 'true'
+        run: python -m pip install -r requirements-lock.txt
+      - name: Install verified Ollama Linux runtime
+        if: steps.preflight.outputs.skip != 'true'
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/ollama.tar.zst" https://github.com/ollama/ollama/releases/download/v0.35.0/ollama-linux-amd64.tar.zst
+          echo "1c114a6b220c5efca2ef2b1e5f01d1e535e26f6cd6d1678c8489325d2835e525  $RUNNER_TEMP/ollama.tar.zst" | sha256sum --check --strict
+          mkdir -p tools/ollama
+          tar --zstd -xf "$RUNNER_TEMP/ollama.tar.zst" -C tools/ollama
+          python cloud_research.py prepare-model
+      - name: Collect Yahoo data and run Qwen research review
+        if: steps.preflight.outputs.skip != 'true'
+        run: python research_agent.py --run --local-ai
+      - name: Validate report and prepare delivery
+        if: steps.preflight.outputs.skip != 'true'
+        run: python cloud_research.py prepare
+      - name: Persist claim before sending any email
+        if: steps.preflight.outputs.skip != 'true' && env.DRY_RUN != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.preflight.outputs.claim }}
+          path: data/research/cloud-claim.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Send once and confirm in Gmail Sent
+        if: steps.preflight.outputs.skip != 'true' && env.DRY_RUN != 'true'
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
+        run: python cloud_research.py send
+      - name: Save report and any confirmed receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: equitydesk-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            data/research/latest.html
+            data/research/latest.json
+            data/research/cloud-receipt.json
+          if-no-files-found: ignore
+          retention-days: 7
