@@ -134,6 +134,12 @@ def receipt(item, message_id):
     print(json.dumps(result))
 
 
+def verify_smtp(address):
+    # Authenticate without sending, including when today's report already exists.
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=ssl.create_default_context(), timeout=45) as smtp:
+        smtp.login(address, password())
+
+
 def preflight(dry_run=False):
     item = identity(account(), today())
     output({'date': item['date'], 'claim': item['claimArtifact'], 'skip': 'false'})
@@ -143,6 +149,7 @@ def preflight(dry_run=False):
     password()
     # Search first: also prevents duplicate delivery after migration from the Mac.
     message_id = find_sent(account(), item)
+    verify_smtp(account())
     if message_id:
         receipt(item, message_id)
         output({'skip': 'true'})
@@ -170,6 +177,9 @@ def validated_report(report, date):
     requested, usable = coverage.get('requested', 0), coverage.get('usablePrices', 0)
     if not requested or usable / requested < .8:
         raise ValueError('Less than 80% price coverage. The quantitative report is saved, but email is blocked.')
+    benchmark = next((row for row in report.get('rows', []) if row['symbol'] == report.get('benchmark')), None)
+    if not benchmark or benchmark.get('priceWarning') or benchmark['prices'].get('stale') or benchmark['prices'].get('observations', 0) < 64:
+        raise ValueError('The benchmark history is unavailable or stale. Relative performance cannot be verified; email is blocked.')
     ai = report.get('localAI', {})
     if ai.get('status') != 'complete' or ai.get('runtime') != 'github-actions':
         raise ValueError('The cloud AI review did not complete. Inspect the saved quantitative report.')

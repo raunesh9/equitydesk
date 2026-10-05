@@ -179,6 +179,11 @@ class Collector:
         self.yf, self.directory, self.now = yf, directory, now
         yf.set_tz_cache_location(str(ROOT / 'data' / 'yahoo-cache'))
         yf.config.debug.hide_exceptions = False
+        # Fresh cloud runners have no SQLite cache yet. Initialize the schemas
+        # serially before worker threads can race to create the same tables.
+        from yfinance import cache
+        cache.get_tz_cache().initialise()
+        cache.get_cookie_cache().initialise()
 
     def cached(self, key, fetch, ttl):
         path = self.directory / 'cache' / (key + '.json')

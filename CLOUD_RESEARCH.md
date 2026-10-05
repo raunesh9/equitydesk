@@ -14,7 +14,7 @@ This workflow runs the Yahoo scan and Qwen3 4B review on GitHub's Ubuntu runner.
 ## What it does
 
 - Scans the curated universe in `resources/research-universe.json`: 48 companies and 27 market, sector, and industry ETFs. This is not an exhaustive exchange scan.
-- Uses completed-session Yahoo prices and disclosed source/update times. Missing metrics stay unavailable. A full scan needs at least 80% usable price coverage and a completed cloud AI review before delivery.
+- Uses completed-session Yahoo prices and disclosed source/update times. Missing metrics stay unavailable. A full scan needs at least 80% usable price coverage, usable benchmark history, and a completed cloud AI review before delivery.
 - Runs the same pinned Qwen model with Ollama on the cloud runner. The model selects supported evidence; displayed financial figures come from data and calculations, not generated prose. No paid model API is required.
 - Does not read personal holdings, research notes, databases, or other local files. It does not place trades.
 - Reads only the headers of matching daily reports in Gmail Sent. It saves a durable delivery claim before sending, sends once through Gmail over TLS, and records the actual Gmail message ID after checking Sent. A timeout or ambiguous send is never automatically retried.

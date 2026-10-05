@@ -46,6 +46,15 @@ class CloudResearchTests(unittest.TestCase):
         self.assertNotIn('example', json.dumps(a))
         self.assertNotEqual(a['key'], cloud.identity('another@gmail.com','2026-10-04')['key'])
 
+    def test_missing_benchmark_blocks_even_with_otherwise_high_coverage(self):
+        result=self.valid()
+        result['rows']=[row for row in result['rows'] if row['symbol'] != 'SPY']
+        with self.assertRaisesRegex(ValueError,'benchmark'):
+            cloud.validated_report(result,cloud.today())
+        result=self.valid();result['rows'][0]['priceWarning']='retrieval failed'
+        with self.assertRaisesRegex(ValueError,'benchmark'):
+            cloud.validated_report(result,cloud.today())
+
     def test_sent_search_checks_exact_recipient_subject_date_and_gmail_id(self):
         item=cloud.identity('example@gmail.com','2026-10-04')
         for recipient,subject,day,expected in [
@@ -69,21 +78,31 @@ class CloudResearchTests(unittest.TestCase):
     def test_already_sent_is_a_noop_even_without_a_cloud_claim(self):
         with patch.object(cloud,'account',return_value='example@gmail.com'), \
              patch.object(cloud,'password',return_value='secret'), \
+             patch.object(cloud,'verify_smtp') as authenticate, \
              patch.object(cloud,'find_sent',return_value='actual-gmail-id'), \
              patch.object(cloud,'receipt') as save, patch.object(cloud,'output') as output, \
              patch.object(cloud,'has_claim') as claimed:
             cloud.preflight()
             save.assert_called_once()
+            authenticate.assert_called_once_with('example@gmail.com')
             claimed.assert_not_called()
             self.assertIn(unittest.mock.call({'skip':'true'}), output.call_args_list)
 
     def test_ambiguous_claim_blocks_before_scan_or_send(self):
         with patch.object(cloud,'account',return_value='example@gmail.com'), \
              patch.object(cloud,'password',return_value='secret'), \
+             patch.object(cloud,'verify_smtp'), \
              patch.object(cloud,'find_sent',return_value=None), \
              patch.object(cloud,'has_claim',return_value=True), patch.object(cloud,'output'):
             with self.assertRaisesRegex(RuntimeError,'already claimed'):
                 cloud.preflight()
+
+    def test_email_connection_check_authenticates_without_sending(self):
+        with patch.object(cloud,'password',return_value='secret'), patch.object(cloud.smtplib,'SMTP_SSL') as smtp:
+            cloud.verify_smtp('example@gmail.com')
+            sender=smtp.return_value.__enter__.return_value
+            sender.login.assert_called_once_with('example@gmail.com','secret')
+            sender.send_message.assert_not_called()
 
     def test_claim_search_handles_pagination_and_fails_closed(self):
         item = cloud.identity('example@gmail.com','2026-10-04')
