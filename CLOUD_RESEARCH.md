@@ -1,6 +1,6 @@
 # EquityDesk daily cloud research
 
-This workflow runs the Yahoo scan and Qwen3 4B review on GitHub's Ubuntu runner. Your Mac can be switched off. The daily schedule starts at 9 AM in America/Indiana/Indianapolis, including weekends, and follows daylight saving time. GitHub can queue scheduled runs, so inbox delivery is not guaranteed at exactly 9 AM. Scheduled workflows in public repositories can also be disabled after 60 days without repository activity.
+This workflow runs the Yahoo scan and Qwen3 4B review on GitHub's Ubuntu runner. Your Mac can be switched off. It prepares the report from 8:30 AM and waits until 9 AM to send it in America/Indiana/Indianapolis, including weekends, following daylight saving time. GitHub can queue scheduled runs, so inbox delivery is not guaranteed at exactly 9 AM. Scheduled workflows in public repositories can also be disabled after 60 days without repository activity.
 
 ## Finish the email connection
 

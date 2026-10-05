@@ -186,6 +186,22 @@ def prepare():
     print('Full cloud report validated. Ready for the durable delivery claim.')
 
 
+def delivery_delay(now, event):
+    if event != 'schedule':
+        return 0
+    local = now.astimezone(LOCAL)
+    target = local.replace(hour=9, minute=0, second=0, microsecond=0)
+    return max(0, (target - local).total_seconds())
+
+
+def wait_for_delivery():
+    while True:
+        seconds = delivery_delay(dt.datetime.now(LOCAL), os.environ.get('GITHUB_EVENT_NAME'))
+        if not seconds:
+            return
+        time.sleep(min(60, seconds))
+
+
 def send():
     address = account()
     item = identity(address, today())
@@ -226,7 +242,7 @@ def send():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['preflight', 'prepare-model', 'prepare', 'send'])
+    parser.add_argument('action', choices=['preflight', 'prepare-model', 'prepare', 'wait', 'send'])
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
     DIRECTORY.mkdir(parents=True, exist_ok=True)
@@ -237,6 +253,8 @@ def main():
             prepare_model()
         elif args.action == 'prepare':
             prepare()
+        elif args.action == 'wait':
+            wait_for_delivery()
         else:
             send()
     except (ValueError, RuntimeError) as error:

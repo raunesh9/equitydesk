@@ -2,7 +2,8 @@ name: EquityDesk daily cloud research
 
 on:
   schedule:
-    - cron: '0 9 * * *'
+    # Prepare ahead of the requested 9 AM delivery time.
+    - cron: '30 8 * * *'
       timezone: America/Indiana/Indianapolis
   workflow_dispatch:
     inputs:
@@ -23,7 +24,7 @@ jobs:
   research:
     if: github.event_name == 'workflow_dispatch' || vars.EQUITYDESK_CLOUD_ENABLED == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 85
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       EQUITYDESK_EMAIL: ${{ vars.EQUITYDESK_EMAIL }}
@@ -67,6 +68,9 @@ jobs:
       - name: Validate report and prepare delivery
         if: steps.preflight.outputs.skip != 'true'
         run: python cloud_research.py prepare
+      - name: Wait until 9 AM Indianapolis for scheduled delivery
+        if: steps.preflight.outputs.skip != 'true' && env.DRY_RUN != 'true'
+        run: python cloud_research.py wait
       - name: Persist claim before sending any email
         if: steps.preflight.outputs.skip != 'true' && env.DRY_RUN != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

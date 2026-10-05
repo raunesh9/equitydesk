@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Local market research: fetched evidence, deterministic metrics, reviewable reports.
+"""Market research: fetched evidence, deterministic metrics, reviewable reports.
 
-AI interpretation runs in local Ollama; delivery is orchestrated by the scheduled Codex task.
+AI interpretation runs in Ollama on the Mac or GitHub's cloud runner.
 This module never submits trades, reads holdings, or sends mail itself.
 """
 import argparse
@@ -273,7 +273,7 @@ def assemble(rows, universe, now):
                 'Stocks: +1 each for positive reported revenue growth, profit margin and free cash flow; +1 below the covered industry peer P/E median when at least 3 other profitable peers exist.',
                 'Debt/equity = total debt / positive shareholder equity from the same latest quarterly statement; it is not total liabilities/equity. Non-financial/non-real-estate stocks lose 1 point above 2x.',
                 'Up to 5 eligible stocks scoring at least 5, capped at 2 per sector. This heuristic is unbacktested and is not a forecast, probability, price target, or instruction to buy.',
-                'The local model reviews up to 16 higher-scoring eligible stocks and the available ETF trends, then selects priorities and existing supporting evidence.',
+                'The Qwen model reviews up to 16 higher-scoring eligible stocks and the available ETF trends, then selects priorities and existing supporting evidence.',
                 'ETF prices are group proxies, not exhaustive industry analysis. Corporate debt/equity and company P/E scoring are not applied to ETFs.',
                 'Company metrics are provider-reported snapshots retrieved at the displayed time, not necessarily newly reported financial periods. Missing figures stay unavailable.',
                 'On weekends and holidays the report uses the latest available completed session. Prices older than 5 calendar days are excluded from watch candidates.',
